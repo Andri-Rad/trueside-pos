@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, DocumentData } from "firebase/firestore";
 import { db } from "@/firebase";
 
-// Match the same Order structure used in TShirtForm
+// Order item type
 type OrderItem = {
   item: string;
   size: string;
@@ -12,6 +12,7 @@ type OrderItem = {
   price: number;
 };
 
+// Main order type
 type Order = {
   id: string;
   name: string;
@@ -31,19 +32,21 @@ export default function AdminOrdersPage() {
       try {
         const querySnapshot = await getDocs(collection(db, "orders"));
         const ordersData: Order[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
+          const data = doc.data() as DocumentData;
           return {
             id: doc.id,
             name: data.name ?? "",
             email: data.email ?? "",
             phone: data.phone ?? "",
             address: data.address ?? "",
-            orders: (data.orders ?? []).map((item: any) => ({
-              item: item.item ?? "",
-              size: item.size ?? "",
-              quantity: Number(item.quantity) || 0,
-              price: Number(item.price) || 0,
-            })),
+            orders: Array.isArray(data.orders)
+              ? data.orders.map((item: Partial<OrderItem>): OrderItem => ({
+                  item: item.item ?? "",
+                  size: item.size ?? "",
+                  quantity: Number(item.quantity) || 0,
+                  price: Number(item.price) || 0,
+                }))
+              : [],
             total: Number(data.total) || 0,
             timestamp: data.timestamp ?? undefined,
           };

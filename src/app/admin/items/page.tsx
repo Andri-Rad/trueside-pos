@@ -27,15 +27,15 @@ export default function AdminViewItemsPage() {
       try {
         const querySnapshot = await getDocs(collection(db, "items"));
         const fetchedItems: Item[] = querySnapshot.docs.map((docSnap) => {
-          const data = docSnap.data();
+          const data = docSnap.data() as Partial<Item>;
           return {
             id: docSnap.id,
-            name: String(data.name ?? ""),
+            name: data.name ?? "",
             price: Number(data.price) || 0,
             sizes: Array.isArray(data.sizes)
-              ? data.sizes.map(String)
+              ? data.sizes.map((s) => String(s))
               : [],
-            imageUrl: String(data.imageUrl ?? ""),
+            imageUrl: data.imageUrl ?? "",
           };
         });
         setItems(fetchedItems);
@@ -53,13 +53,13 @@ export default function AdminViewItemsPage() {
       const itemRef = doc(db, "items", item.id);
       await updateDoc(itemRef, {
         name: item.name,
-        price: Number(item.price),
+        price: item.price,
         sizes: item.sizes,
         imageUrl: item.imageUrl,
       });
       alert("Item updated successfully.");
     } catch (error) {
-      console.error("Error updating item: ", error);
+      console.error("Error updating item:", error);
       alert("Failed to update item.");
     }
   };
@@ -71,7 +71,7 @@ export default function AdminViewItemsPage() {
       setItems((prev) => prev.filter((item) => item.id !== id));
       alert("Item deleted.");
     } catch (error) {
-      console.error("Error deleting item: ", error);
+      console.error("Error deleting item:", error);
       alert("Failed to delete item.");
     }
   };
