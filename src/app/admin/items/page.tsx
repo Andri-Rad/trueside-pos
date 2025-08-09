@@ -10,18 +10,38 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 
+type Item = {
+  id: string;
+  name: string;
+  price: number;
+  sizes: string[];
+  imageUrl: string;
+};
+
 export default function AdminViewItemsPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchItems = async () => {
-      const querySnapshot = await getDocs(collection(db, "items"));
-      const fetchedItems = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setItems(fetchedItems);
+      try {
+        const querySnapshot = await getDocs(collection(db, "items"));
+        const fetchedItems: Item[] = querySnapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            name: String(data.name ?? ""),
+            price: Number(data.price) || 0,
+            sizes: Array.isArray(data.sizes)
+              ? data.sizes.map(String)
+              : [],
+            imageUrl: String(data.imageUrl ?? ""),
+          };
+        });
+        setItems(fetchedItems);
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
     };
 
     fetchItems();
@@ -56,13 +76,19 @@ export default function AdminViewItemsPage() {
     }
   };
 
-  const handleInputChange = (index: number, field: string, value: any) => {
-    const updated = [...items];
-    updated[index][field] = value;
-    setItems(updated);
+  const handleInputChange = <K extends keyof Item>(
+    index: number,
+    field: K,
+    value: Item[K]
+  ) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
-  const filteredItems = items.filter(item =>
+  const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -87,7 +113,9 @@ export default function AdminViewItemsPage() {
                 <input
                   type="text"
                   value={item.name}
-                  onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "name", e.target.value)
+                  }
                   className="w-full border px-3 py-2 mt-1 rounded"
                 />
               </div>
@@ -96,17 +124,28 @@ export default function AdminViewItemsPage() {
                 <input
                   type="number"
                   value={item.price}
-                  onChange={(e) => handleInputChange(index, "price", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "price", Number(e.target.value))
+                  }
                   className="w-full border px-3 py-2 mt-1 rounded"
                 />
               </div>
               <div>
-                <label className="font-semibold">Available Sizes (comma-separated):</label>
+                <label className="font-semibold">
+                  Available Sizes (comma-separated):
+                </label>
                 <input
                   type="text"
                   value={item.sizes.join(",")}
                   onChange={(e) =>
-                    handleInputChange(index, "sizes", e.target.value.split(",").map(s => s.trim()))
+                    handleInputChange(
+                      index,
+                      "sizes",
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    )
                   }
                   className="w-full border px-3 py-2 mt-1 rounded"
                 />
@@ -116,7 +155,9 @@ export default function AdminViewItemsPage() {
                 <input
                   type="text"
                   value={item.imageUrl}
-                  onChange={(e) => handleInputChange(index, "imageUrl", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "imageUrl", e.target.value)
+                  }
                   className="w-full border px-3 py-2 mt-1 rounded"
                 />
               </div>

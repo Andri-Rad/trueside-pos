@@ -1,22 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/firebase';
 import jsPDF from 'jspdf';
 
-type FormDataType = {
+// Type for each available shop item
+interface Item {
+  id: string;
+  name: string;
+  price: number;
+}
+
+// Type for an order line in the form
+interface OrderItem {
+  item: string; // Item name
+  size: string;
+  quantity: number;
+  price: number;
+}
+
+// Type for the entire form's data
+interface FormDataType {
   name: string;
   email: string;
   address: string;
   phone: string;
-  orders: {
-    item: string;
-    size: string;
-    quantity: number;
-    price: number;
-  }[];
-};
+  orders: OrderItem[];
+}
 
 export default function TShirtForm() {
   const [formData, setFormData] = useState<FormDataType>({
@@ -27,25 +38,41 @@ export default function TShirtForm() {
     orders: [{ item: '', size: '', quantity: 1, price: 0 }],
   });
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
   useEffect(() => {
     const fetchItems = async () => {
       const snap = await getDocs(collection(db, 'items'));
-      setItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const fetchedItems: Item[] = snap.docs.map(doc => {
+        const data = doc.data() as DocumentData;
+        return {
+          id: doc.id,
+          name: String(data.name),
+          price: Number(data.price),
+        };
+      });
+      setItems(fetchedItems);
     };
     fetchItems();
   }, []);
 
-  const handleOrderChange = (index: number, field: string, value: any) => {
+  const handleOrderChange = (
+    index: number,
+    field: keyof OrderItem,
+    value: string | number
+  ) => {
     const newOrders = [...formData.orders];
 
     if (field === 'item') {
       const selectedItem = items.find(item => item.name === value);
-      newOrders[index][field] = value;
+      newOrders[index].item = String(value);
       newOrders[index].price = selectedItem?.price || 0;
-    } else {
-      newOrders[index][field] = field === 'quantity' ? parseInt(value) : value;
+    } else if (field === 'quantity') {
+      newOrders[index].quantity = typeof value === 'string' ? parseInt(value, 10) || 1 : value;
+    } else if (field === 'size') {
+      newOrders[index].size = String(value);
+    } else if (field === 'price') {
+      newOrders[index].price = typeof value === 'string' ? parseFloat(value) || 0 : value;
     }
 
     setFormData({ ...formData, orders: newOrders });
@@ -182,7 +209,7 @@ export default function TShirtForm() {
 
             <input
               type="number"
-              min="1"
+              min={1}
               className="border p-2 w-1/2"
               placeholder="Quantity"
               value={order.quantity}
@@ -215,9 +242,7 @@ export default function TShirtForm() {
         + Add Another Item
       </button>
 
-      <div className="text-lg font-semibold">
-        Total: Rp{getTotal()}
-      </div>
+      <div className="text-lg font-semibold">Total: Rp{getTotal()}</div>
 
       <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
         Submit Order

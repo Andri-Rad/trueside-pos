@@ -4,17 +4,50 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 
+// Match the same Order structure used in TShirtForm
+type OrderItem = {
+  item: string;
+  size: string;
+  quantity: number;
+  price: number;
+};
+
+type Order = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  orders: OrderItem[];
+  total: number;
+  timestamp?: string; // stored as ISO string
+};
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "orders"));
-        const ordersData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const ordersData: Order[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name ?? "",
+            email: data.email ?? "",
+            phone: data.phone ?? "",
+            address: data.address ?? "",
+            orders: (data.orders ?? []).map((item: any) => ({
+              item: item.item ?? "",
+              size: item.size ?? "",
+              quantity: Number(item.quantity) || 0,
+              price: Number(item.price) || 0,
+            })),
+            total: Number(data.total) || 0,
+            timestamp: data.timestamp ?? undefined,
+          };
+        });
         console.log("Fetched Orders:", ordersData);
         setOrders(ordersData);
       } catch (error) {
@@ -42,14 +75,14 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order: any) => (
+            {orders.map((order) => (
               <tr key={order.id}>
                 <td className="border px-4 py-2">{order.name}</td>
                 <td className="border px-4 py-2">{order.email}</td>
                 <td className="border px-4 py-2">{order.phone}</td>
                 <td className="border px-4 py-2">{order.address}</td>
                 <td className="border px-4 py-2">
-                  {(order.orders || []).map((item: any, index: number) => (
+                  {order.orders.map((item, index) => (
                     <div key={index}>
                       {item.item} - {item.size} x {item.quantity}
                     </div>
