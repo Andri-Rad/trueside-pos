@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, addDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/firebase';
 import jsPDF from 'jspdf';
+import Link from 'next/link';
+
 
 // Type for each available shop item
 interface Item {
@@ -247,6 +249,15 @@ export default function TShirtForm() {
       <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
         Submit Order
       </button>
+
+      <Link href="/admin" passHref>
+        <button
+          type="button"
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          Go to Admin Dashboard
+        </button>
+      </Link>
     </form>
   );
 }
