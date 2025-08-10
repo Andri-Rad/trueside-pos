@@ -1,13 +1,16 @@
 'use client';
+
 import { useState } from 'react';
 import { db } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation'; // <-- Import router
 
 export default function AdminPage() {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [sizes, setSizes] = useState('');
   const [price, setPrice] = useState('');
+  const router = useRouter(); // <-- Initialize router
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +37,14 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-md mx-auto p-6">
+      {/* Back button */}
+      <button
+        onClick={() => router.push('/admin')}
+        className="mb-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+      >
+        ← Back to Dashboard
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">Admin - Add Item</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, DocumentData } from "firebase/firestore";
 import { db } from "@/firebase";
+import { useRouter } from "next/navigation"; // <-- Import router
 
 // Order item type
 type OrderItem = {
@@ -26,6 +27,7 @@ type Order = {
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const router = useRouter(); // <-- Initialize router
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -63,6 +65,14 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="p-6">
+      {/* Back button */}
+      <button
+        onClick={() => router.push("/admin")}
+        className="mb-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+      >
+        ← Back to Dashboard
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">Submitted Orders</h1>
       <div className="overflow-x-auto">
         <table className="table-auto w-full border">

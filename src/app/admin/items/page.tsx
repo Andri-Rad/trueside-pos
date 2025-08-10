@@ -9,6 +9,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
+import { useRouter } from "next/navigation"; // <-- Added
 
 type Item = {
   id: string;
@@ -21,6 +22,7 @@ type Item = {
 export default function AdminViewItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter(); // <-- Added
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -94,6 +96,14 @@ export default function AdminViewItemsPage() {
 
   return (
     <div className="p-6">
+      {/* Back button */}
+      <button
+        onClick={() => router.push("/admin")}
+        className="mb-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+      >
+        ← Back to Dashboard
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">All Items</h1>
 
       <input
